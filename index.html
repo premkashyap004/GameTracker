@@ -1,97 +1,1472 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tournament Tracker</title>
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #333;
+        overflow-x: hidden;
       }
-      table,
-      th,
-      td {
-        border: 1px solid black;
-        border-collapse: collapse;
-        padding: 5px;
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
       }
-      .leader {
-        font-weight: bold;
-        color: green;
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+        animation: fadeInDown 0.8s ease-out;
       }
-      .second {
-        font-weight: bold;
-        color: orange;
+
+      .header h1 {
+        color: white;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        margin-bottom: 10px;
       }
-      .third {
-        font-weight: bold;
-        color: red;
+
+      .header p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+      }
+
+      .reset-section {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .reset-btn {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .reset-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
+      }
+
+      .reset-btn:active {
+        transform: translateY(0);
+        animation: ripple 0.6s ease-out;
+      }
+
+      .reset-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .reset-btn:hover::before {
+        left: 100%;
+      }
+
+      .confirmation-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .confirmation-dialog.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .dialog-content {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        transform: scale(0.8);
+        transition: transform 0.3s ease;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      .confirmation-dialog.show .dialog-content {
+        transform: scale(1);
+      }
+
+      .dialog-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #dc3545;
+        margin-bottom: 15px;
+      }
+
+      .dialog-message {
+        color: #666;
+        margin-bottom: 25px;
+        line-height: 1.6;
+      }
+
+      .dialog-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+      }
+
+      .dialog-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 100px;
+      }
+
+      .dialog-btn.confirm {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+      }
+
+      .dialog-btn.cancel {
+        background: #f8f9fa;
+        color: #666;
+        border: 2px solid #e9ecef;
+      }
+
+      .dialog-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.95);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        margin-bottom: 25px;
+        padding: 25px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        animation: slideUp 0.6s ease-out;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .section:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-title::before {
+        content: "";
+        width: 4px;
+        height: 25px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 2px;
+      }
+
+      .round-section {
+        margin-bottom: 30px;
+      }
+
+      .round-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .round-title::before {
+        content: "";
+        width: 30px;
+        height: 3px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 2px;
+      }
+
+      .games-grid {
+        display: grid;
+        gap: 15px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+
+      .game-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #667eea;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .game-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+
+      .game-card:hover::before {
+        transform: scaleX(1);
+      }
+
+      .game-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .game-card.completed {
+        border-left-color: #28a745;
+        background: linear-gradient(
+          135deg,
+          rgba(40, 167, 69, 0.02),
+          rgba(255, 255, 255, 1)
+        );
+      }
+
+      .game-status {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #e0e0e0;
+      }
+
+      .game-status.in-progress {
+        background: #ffc107;
+        animation: pulse 2s infinite;
+      }
+
+      .game-status.completed {
+        background: #28a745;
+      }
+
+      .tournament-flow {
+        background: linear-gradient(135deg, #f8f9ff, #fff);
+        border: 2px dashed #667eea;
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      .flow-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 10px;
+      }
+
+      .flow-text {
+        color: #666;
+        line-height: 1.6;
+      }
+
+      .progress-bar {
+        background: #e9ecef;
+        border-radius: 10px;
+        height: 8px;
+        margin: 15px 0;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.5s ease;
+        position: relative;
+      }
+
+      .progress-fill::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        animation: shimmer 2s infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+
+      .game-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .game-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .server-badge {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .players-vs {
+        font-size: 1.1rem;
+        text-align: center;
+        margin: 15px 0;
+        color: #666;
+      }
+
+      .score-display {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        margin: 20px 0;
+        background: #f8f9ff;
+        border-radius: 12px;
+        padding: 15px;
+      }
+
+      .score-item {
+        text-align: center;
+        flex: 1;
+      }
+
+      .player-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+      }
+
+      .score {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .vs-divider {
+        font-size: 1.5rem;
+        color: #ccc;
+        font-weight: 300;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .point-btn {
+        flex: 1;
+        min-width: 120px;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .point-btn:not(:disabled) {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .point-btn:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+      }
+
+      .point-btn:not(:disabled):active {
+        transform: translateY(0);
+        animation: ripple 0.6s ease-out;
+      }
+
+      .point-btn:disabled {
+        background: #e0e0e0;
+        color: #999;
+        cursor: not-allowed;
+      }
+
+      .leaderboard {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+      }
+
+      .leaderboard-item {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f0f0f0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .leaderboard-item:last-child {
+        border-bottom: none;
+      }
+
+      .leaderboard-item::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        transition: all 0.3s ease;
+      }
+
+      .rank-1::before {
+        background: #ffd700;
+      }
+      .rank-2::before {
+        background: #c0c0c0;
+      }
+      .rank-3::before {
+        background: #cd7f32;
+      }
+
+      .rank-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-right: 15px;
+        color: white;
+        font-size: 1.1rem;
+      }
+
+      .rank-1 .rank-badge {
+        background: linear-gradient(135deg, #ffd700, #ffed4e);
+      }
+      .rank-2 .rank-badge {
+        background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+      }
+      .rank-3 .rank-badge {
+        background: linear-gradient(135deg, #cd7f32, #deb887);
+      }
+
+      .player-info {
+        flex: 1;
+      }
+
+      .player-name-board {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 3px;
+      }
+
+      .rank-1 .player-name-board {
+        color: #b8860b;
+      }
+      .rank-2 .player-name-board {
+        color: #708090;
+      }
+      .rank-3 .player-name-board {
+        color: #8b4513;
+      }
+
+      .points-display {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .winner-badge {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        animation: pulse 2s infinite;
+      }
+
+      .eliminator,
+      .final {
+        text-align: center;
+      }
+
+      .stage-info {
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+        color: #666;
+      }
+
+      .empty-stage {
+        text-align: center;
+        color: #999;
+        font-style: italic;
+        padding: 40px 20px;
+      }
+
+      /* Animations */
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      @keyframes ripple {
+        0% {
+          transform: scale(0.8);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .games-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .section {
+          padding: 20px;
+          margin-bottom: 20px;
+          border-radius: 15px;
+        }
+
+        .game-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .score-display {
+          flex-direction: column;
+          gap: 12px;
+          padding: 20px 15px;
+          border-radius: 15px;
+        }
+
+        .score-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          padding: 12px 0;
+          background: rgba(255, 255, 255, 0.7);
+          border-radius: 10px;
+          padding: 15px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .vs-divider {
+          display: none;
+        }
+
+        .point-btn {
+          min-width: 120px;
+          font-size: 1rem;
+          padding: 12px 20px;
+          border-radius: 30px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }
+
+        .button-group {
+          gap: 12px;
+          margin-top: 15px;
+        }
+
+        .game-card {
+          padding: 25px 20px;
+          border-radius: 20px;
+          margin-bottom: 15px;
+        }
+
+        .game-card:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaderboard-item {
+          padding: 25px 20px;
+          border-radius: 15px;
+          margin-bottom: 10px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .rank-badge {
+          width: 45px;
+          height: 45px;
+          font-size: 1.2rem;
+        }
+
+        .player-name-board {
+          font-size: 1.3rem;
+        }
+
+        .points-display {
+          font-size: 1.8rem;
+        }
+
+        .reset-btn {
+          padding: 15px 30px;
+          font-size: 1.1rem;
+          border-radius: 30px;
+        }
+
+        .dialog-content {
+          padding: 25px;
+          margin: 20px;
+        }
+
+        .dialog-buttons {
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .dialog-btn {
+          padding: 12px 24px;
+          font-size: 1rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .header h1 {
+          font-size: 1.8rem;
+        }
+
+        .section {
+          padding: 15px;
+          margin-bottom: 15px;
+        }
+
+        .button-group {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .point-btn {
+          width: 100%;
+          min-width: unset;
+          padding: 15px 20px;
+          font-size: 1.1rem;
+        }
+
+        .game-card {
+          padding: 20px 15px;
+        }
+
+        .score-item {
+          padding: 12px;
+          font-size: 1.1rem;
+        }
+
+        .score {
+          font-size: 2.2rem;
+        }
+
+        .player-name {
+          font-size: 1.1rem;
+        }
+
+        .leaderboard-item {
+          padding: 20px 15px;
+        }
+
+        .rank-badge {
+          width: 40px;
+          height: 40px;
+          font-size: 1.1rem;
+        }
+
+        .player-name-board {
+          font-size: 1.2rem;
+        }
+
+        .points-display {
+          font-size: 1.6rem;
+        }
+
+        .reset-btn {
+          padding: 12px 24px;
+          font-size: 1rem;
+        }
+      }
+
+      /* OnePlus specific optimizations */
+      @media (max-width: 414px) and (min-height: 800px) {
+        .container {
+          padding: 12px;
+        }
+
+        .game-card {
+          padding: 22px 18px;
+          border-radius: 18px;
+        }
+
+        .point-btn {
+          padding: 14px 18px;
+          font-size: 1.05rem;
+          border-radius: 25px;
+        }
+
+        .score {
+          font-size: 2.4rem;
+        }
+
+        .player-name {
+          font-size: 1.15rem;
+        }
       }
     </style>
   </head>
   <body>
-    <h1>Point-Level Tournament Tracker</h1>
+    <div class="container">
+      <div class="header">
+        <h1>🏆 Tournament Tracker</h1>
+        <p>Point-by-point championship tracking</p>
+      </div>
 
-    <h2>Normal Games</h2>
-    <table id="gamesTable">
-      <tr>
-        <th>Game</th>
-        <th>Players</th>
-        <th>Points</th>
-        <th>Server</th>
-        <th>Give Point</th>
-      </tr>
-    </table>
+      <div class="reset-section">
+        <button class="reset-btn" onclick="showResetConfirmation()">
+          🔄 Reset Tournament
+        </button>
+      </div>
 
-    <h2>Eliminator</h2>
-    <div id="eliminatorDiv"></div>
+      <div class="section">
+        <h2 class="section-title">🎮 Group Stage</h2>
+        <div id="gamesContainer"></div>
+      </div>
 
-    <h2>Final</h2>
-    <div id="finalDiv"></div>
+      <div class="section">
+        <h2 class="section-title">⚔️ Eliminator</h2>
+        <div id="eliminatorContainer">
+          <div class="empty-stage">Waiting for group stage to complete...</div>
+        </div>
+      </div>
 
-    <h2>Leaderboard</h2>
-    <ul id="pointsList"></ul>
+      <div class="section">
+        <h2 class="section-title">🥇 Final</h2>
+        <div id="finalContainer">
+          <div class="empty-stage">Waiting for eliminator to complete...</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2 class="section-title">🏅 Leaderboard</h2>
+        <div class="leaderboard" id="leaderboard"></div>
+      </div>
+    </div>
+
+    <!-- Reset Confirmation Dialog -->
+    <div id="resetDialog" class="confirmation-dialog">
+      <div class="dialog-content">
+        <div class="dialog-title">⚠️ Reset Tournament</div>
+        <div class="dialog-message">
+          Are you sure you want to reset the entire tournament?<br />
+          This will clear all scores, points, and progress.<br />
+          <strong>This action cannot be undone!</strong>
+        </div>
+        <div class="dialog-buttons">
+          <button class="dialog-btn confirm" onclick="resetTournament()">
+            Yes, Reset
+          </button>
+          <button class="dialog-btn cancel" onclick="hideResetConfirmation()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
 
     <script>
-      const ws = new WebSocket("ws://localhost:8000/ws");
+      const players = ["Prem", "Sanjay", "Gokul"];
+      let pointsTotal = { Prem: 0, Sanjay: 0, Gokul: 0 };
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        const gamesTable = document.getElementById("gamesTable");
-        gamesTable.innerHTML =
-          "<tr><th>Game</th><th>Players</th><th>Points</th><th>Server</th><th>Give Point</th></tr>";
+      let normalGames = [
+        {
+          id: 1,
+          players: ["Prem", "Sanjay"],
+          points: { Prem: 0, Sanjay: 0 },
+          server: "Prem",
+          winner: null,
+          round: 1,
+        },
+        {
+          id: 2,
+          players: ["Sanjay", "Gokul"],
+          points: { Sanjay: 0, Gokul: 0 },
+          server: "Sanjay",
+          winner: null,
+          round: 1,
+        },
+        {
+          id: 3,
+          players: ["Gokul", "Prem"],
+          points: { Gokul: 0, Prem: 0 },
+          server: "Gokul",
+          winner: null,
+          round: 1,
+        },
+        {
+          id: 4,
+          players: ["Prem", "Sanjay"],
+          points: { Prem: 0, Sanjay: 0 },
+          server: "Prem",
+          winner: null,
+          round: 2,
+        },
+        {
+          id: 5,
+          players: ["Sanjay", "Gokul"],
+          points: { Sanjay: 0, Gokul: 0 },
+          server: "Sanjay",
+          winner: null,
+          round: 2,
+        },
+        {
+          id: 6,
+          players: ["Gokul", "Prem"],
+          points: { Gokul: 0, Prem: 0 },
+          server: "Gokul",
+          winner: null,
+          round: 2,
+        },
+      ];
 
-        data.normal_games.forEach((g) => {
-          const row = gamesTable.insertRow();
-          row.insertCell(0).innerText = g.id;
-          row.insertCell(1).innerText = g.players.join(" vs ");
-          row.insertCell(2).innerText = `${g.players[0]}:${
-            g.points[g.players[0]]
-          } | ${g.players[1]}:${g.points[g.players[1]]}`;
-          row.insertCell(3).innerText = g.server ?? "";
-          const btnCell = row.insertCell(4);
-          g.players.forEach((p) => {
-            const btn = document.createElement("button");
-            btn.innerText = p;
-            btn.disabled = g.winner != null;
-            btn.onclick = () =>
-              ws.send(
-                JSON.stringify({ type: "normal", game_id: g.id, player: p })
-              );
-            btnCell.appendChild(btn);
+      let eliminator = { players: [], points: {}, server: null, winner: null };
+      let finalGame = { players: [], points: {}, server: null, winner: null };
+
+      // localStorage functions
+      function saveToLocalStorage() {
+        const tournamentData = {
+          pointsTotal,
+          normalGames,
+          eliminator,
+          finalGame,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(
+          "tournamentTracker",
+          JSON.stringify(tournamentData)
+        );
+      }
+
+      function loadFromLocalStorage() {
+        try {
+          const savedData = localStorage.getItem("tournamentTracker");
+          if (savedData) {
+            const tournamentData = JSON.parse(savedData);
+
+            // Check if data is not too old (7 days)
+            const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+            if (Date.now() - tournamentData.timestamp < maxAge) {
+              pointsTotal = tournamentData.pointsTotal || pointsTotal;
+              normalGames = tournamentData.normalGames || normalGames;
+              eliminator = tournamentData.eliminator || eliminator;
+              finalGame = tournamentData.finalGame || finalGame;
+              return true;
+            } else {
+              // Clear old data
+              localStorage.removeItem("tournamentTracker");
+            }
+          }
+        } catch (error) {
+          console.error("Error loading tournament data:", error);
+          localStorage.removeItem("tournamentTracker");
+        }
+        return false;
+      }
+
+      function clearLocalStorage() {
+        localStorage.removeItem("tournamentTracker");
+      }
+
+      // Reset tournament functions
+      function showResetConfirmation() {
+        const dialog = document.getElementById("resetDialog");
+        dialog.classList.add("show");
+        document.body.style.overflow = "hidden";
+      }
+
+      function hideResetConfirmation() {
+        const dialog = document.getElementById("resetDialog");
+        dialog.classList.remove("show");
+        document.body.style.overflow = "auto";
+      }
+
+      function resetTournament() {
+        // Reset all data to initial state
+        pointsTotal = { Prem: 0, Sanjay: 0, Gokul: 0 };
+
+        normalGames = normalGames.map((game) => ({
+          ...game,
+          points: { [game.players[0]]: 0, [game.players[1]]: 0 },
+          winner: null,
+          server: game.players[0],
+        }));
+
+        eliminator = { players: [], points: {}, server: null, winner: null };
+        finalGame = { players: [], points: {}, server: null, winner: null };
+
+        // Clear localStorage
+        clearLocalStorage();
+
+        // Re-render everything
+        renderNormalGames();
+        renderEliminator();
+        renderFinal();
+        updateLeaderboard();
+
+        // Hide dialog
+        hideResetConfirmation();
+
+        // Show success message
+        showNotification("Tournament reset successfully!", "success");
+      }
+
+      function showNotification(message, type = "info") {
+        // Create notification element
+        const notification = document.createElement("div");
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: ${
+            type === "success"
+              ? "#28a745"
+              : type === "error"
+              ? "#dc3545"
+              : "#667eea"
+          };
+          color: white;
+          padding: 15px 20px;
+          border-radius: 10px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+          z-index: 1001;
+          font-weight: 600;
+          transform: translateX(100%);
+          transition: transform 0.3s ease;
+        `;
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+          notification.style.transform = "translateX(0)";
+        }, 100);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+          notification.style.transform = "translateX(100%)";
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        }, 3000);
+      }
+
+      function calculateRankings() {
+        return Object.entries(pointsTotal)
+          .sort((a, b) => b[1] - a[1])
+          .map((p) => p[0]);
+      }
+
+      function updateLeaderboard() {
+        const container = document.getElementById("leaderboard");
+        container.innerHTML = "";
+
+        calculateRankings().forEach((player, idx) => {
+          const item = document.createElement("div");
+          item.className = `leaderboard-item rank-${idx + 1}`;
+          item.innerHTML = `
+                    <div class="rank-badge">${idx + 1}</div>
+                    <div class="player-info">
+                        <div class="player-name-board">${player}</div>
+                    </div>
+                    <div class="points-display">${pointsTotal[player]}</div>
+                `;
+          container.appendChild(item);
+
+          // Animate entrance
+          setTimeout(() => {
+            item.style.animation = "slideUp 0.4s ease-out";
+          }, idx * 100);
+        });
+      }
+
+      function renderNormalGames() {
+        const container = document.getElementById("gamesContainer");
+        container.innerHTML = "";
+
+        // Calculate progress
+        const completedGames = normalGames.filter((g) => g.winner).length;
+        const progressPercentage = (completedGames / normalGames.length) * 100;
+
+        // Add tournament flow info
+        const flowDiv = document.createElement("div");
+        flowDiv.className = "tournament-flow";
+        flowDiv.innerHTML = `
+                <div class="flow-title">🏆 Tournament Format</div>
+                <div class="flow-text">
+                    <strong>Round Robin:</strong> Each player plays every other player twice<br>
+                    <strong>Rankings:</strong> 1st → Final | 2nd vs 3rd → Eliminator Winner → Final
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progressPercentage}%"></div>
+                </div>
+                <div style="margin-top: 10px; font-weight: 600; color: #667eea;">
+                    Progress: ${completedGames}/${normalGames.length} games completed
+                </div>
+            `;
+        container.appendChild(flowDiv);
+
+        // Group games by round
+        const rounds = {};
+        normalGames.forEach((game) => {
+          if (!rounds[game.round]) rounds[game.round] = [];
+          rounds[game.round].push(game);
+        });
+
+        Object.keys(rounds).forEach((round) => {
+          const roundSection = document.createElement("div");
+          roundSection.className = "round-section";
+
+          const roundTitle = document.createElement("div");
+          roundTitle.className = "round-title";
+          roundTitle.innerHTML = `Round ${round}`;
+          roundSection.appendChild(roundTitle);
+
+          const gamesGrid = document.createElement("div");
+          gamesGrid.className = "games-grid";
+
+          rounds[round].forEach((game, idx) => {
+            const gameCard = document.createElement("div");
+            gameCard.className = `game-card ${game.winner ? "completed" : ""}`;
+            gameCard.style.animationDelay = `${idx * 0.1}s`;
+
+            const hasPoints =
+              game.points[game.players[0]] > 0 ||
+              game.points[game.players[1]] > 0;
+            const statusClass = game.winner
+              ? "completed"
+              : hasPoints
+              ? "in-progress"
+              : "";
+
+            gameCard.innerHTML = `
+                        <div class="game-status ${statusClass}"></div>
+                        <div class="game-header">
+                            <div class="game-title">Game ${game.id}</div>
+                            <div class="server-badge">🏓 ${game.server}</div>
+                            ${
+                              game.winner
+                                ? `<div class="winner-badge">🏆 ${game.winner} Wins!</div>`
+                                : ""
+                            }
+                        </div>
+                        <div class="players-vs">${game.players[0]} vs ${
+              game.players[1]
+            }</div>
+                        <div class="score-display">
+                            <div class="score-item">
+                                <div class="player-name">${
+                                  game.players[0]
+                                }</div>
+                                <div class="score">${
+                                  game.points[game.players[0]]
+                                }</div>
+                            </div>
+                            <div class="vs-divider">:</div>
+                            <div class="score-item">
+                                <div class="player-name">${
+                                  game.players[1]
+                                }</div>
+                                <div class="score">${
+                                  game.points[game.players[1]]
+                                }</div>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            ${game.players
+                              .map(
+                                (player) => `
+                                <button class="point-btn" onclick="addPoint(${
+                                  game.id
+                                }, '${player}')" ${
+                                  game.winner ? "disabled" : ""
+                                }>
+                                    +1 ${player}
+                                </button>
+                            `
+                              )
+                              .join("")}
+                        </div>
+                    `;
+
+            gamesGrid.appendChild(gameCard);
           });
-        });
 
-        // Leaderboard
-        const pointsList = document.getElementById("pointsList");
-        pointsList.innerHTML = "";
-        data.ranking.forEach((player, idx) => {
-          const li = document.createElement("li");
-          li.innerText = `${player}: ${data.points_total[player]}`;
-          if (idx === 0) li.className = "leader";
-          else if (idx === 1) li.className = "second";
-          else li.className = "third";
-          pointsList.appendChild(li);
+          roundSection.appendChild(gamesGrid);
+          container.appendChild(roundSection);
         });
-      };
+      }
+
+      function renderEliminator() {
+        const container = document.getElementById("eliminatorContainer");
+
+        if (eliminator.players.length === 0) {
+          container.innerHTML =
+            '<div class="empty-stage">Waiting for group stage to complete...</div>';
+          return;
+        }
+
+        container.innerHTML = `
+                <div class="game-card eliminator">
+                    <div class="game-header">
+                        <div class="game-title">Eliminator Match</div>
+                        <div class="server-badge">Server: ${
+                          eliminator.server
+                        }</div>
+                        ${
+                          eliminator.winner
+                            ? `<div class="winner-badge">Winner: ${eliminator.winner}</div>`
+                            : ""
+                        }
+                    </div>
+                    <div class="stage-info">🥈 2nd Place vs 🥉 3rd Place → Winner advances to Final</div>
+                    <div class="players-vs">${eliminator.players[0]} vs ${
+          eliminator.players[1]
+        }</div>
+                    <div class="score-display">
+                        <div class="score-item">
+                            <div class="player-name">${
+                              eliminator.players[0]
+                            }</div>
+                            <div class="score">${
+                              eliminator.points[eliminator.players[0]]
+                            }</div>
+                        </div>
+                        <div class="vs-divider">:</div>
+                        <div class="score-item">
+                            <div class="player-name">${
+                              eliminator.players[1]
+                            }</div>
+                            <div class="score">${
+                              eliminator.points[eliminator.players[1]]
+                            }</div>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        ${eliminator.players
+                          .map(
+                            (player) => `
+                            <button class="point-btn" onclick="addEliminatorPoint('${player}')" ${
+                              eliminator.winner ? "disabled" : ""
+                            }>
+                                +1 ${player}
+                            </button>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+            `;
+      }
+
+      function renderFinal() {
+        const container = document.getElementById("finalContainer");
+
+        if (finalGame.players.length < 2 || !finalGame.players[1]) {
+          container.innerHTML =
+            '<div class="empty-stage">Waiting for eliminator to complete...</div>';
+          return;
+        }
+
+        const p0pts = finalGame.points[finalGame.players[0]] || 0;
+        const p1pts = finalGame.points[finalGame.players[1]] || 0;
+
+        container.innerHTML = `
+                <div class="game-card final">
+                    <div class="game-header">
+                        <div class="game-title">Championship Final</div>
+                        <div class="server-badge">Server: ${
+                          finalGame.server || finalGame.players[0]
+                        }</div>
+                        ${
+                          finalGame.winner
+                            ? `<div class="winner-badge">Champion: ${finalGame.winner}</div>`
+                            : ""
+                        }
+                    </div>
+                    <div class="stage-info">🥇 1st Place vs 🏆 Eliminator Winner</div>
+                    <div class="players-vs">${finalGame.players[0]} vs ${
+          finalGame.players[1]
+        }</div>
+                    <div class="score-display">
+                        <div class="score-item">
+                            <div class="player-name">${
+                              finalGame.players[0]
+                            }</div>
+                            <div class="score">${p0pts}</div>
+                        </div>
+                        <div class="vs-divider">:</div>
+                        <div class="score-item">
+                            <div class="player-name">${
+                              finalGame.players[1]
+                            }</div>
+                            <div class="score">${p1pts}</div>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        ${finalGame.players
+                          .map(
+                            (player) => `
+                            <button class="point-btn" onclick="addFinalPoint('${player}')" ${
+                              finalGame.winner ? "disabled" : ""
+                            }>
+                                +1 ${player}
+                            </button>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+            `;
+      }
+
+      function addPoint(gameId, player) {
+        const game = normalGames.find((g) => g.id === gameId);
+        if (game.winner) return;
+
+        game.points[player]++;
+        game.server =
+          game.players[0] === game.server ? game.players[1] : game.players[0];
+
+        if (game.points[player] >= 21) {
+          game.winner = player;
+          pointsTotal[player]++;
+          checkEliminator();
+        }
+
+        // Save to localStorage
+        saveToLocalStorage();
+
+        renderNormalGames();
+        updateLeaderboard();
+      }
+
+      function addEliminatorPoint(player) {
+        if (eliminator.winner) return;
+
+        eliminator.points[player]++;
+        eliminator.server =
+          eliminator.players[0] === eliminator.server
+            ? eliminator.players[1]
+            : eliminator.players[0];
+
+        if (eliminator.points[player] >= 21) {
+          eliminator.winner = player;
+          pointsTotal[player]++;
+          finalGame.players[1] = player;
+          finalGame.server = finalGame.players[0];
+        }
+
+        // Save to localStorage
+        saveToLocalStorage();
+
+        renderEliminator();
+        renderFinal();
+        updateLeaderboard();
+      }
+
+      function addFinalPoint(player) {
+        if (finalGame.winner) return;
+
+        if (!finalGame.points[player]) finalGame.points[player] = 0;
+        finalGame.points[player]++;
+        finalGame.server =
+          finalGame.players[0] === finalGame.server
+            ? finalGame.players[1]
+            : finalGame.players[0];
+
+        if (finalGame.points[player] >= 21) {
+          finalGame.winner = player;
+          pointsTotal[player]++;
+        }
+
+        // Save to localStorage
+        saveToLocalStorage();
+
+        renderFinal();
+        updateLeaderboard();
+      }
+
+      function checkEliminator() {
+        const finishedGames = normalGames.filter((g) => g.winner != null);
+        if (finishedGames.length === 6 && eliminator.players.length === 0) {
+          const sorted = Object.entries(pointsTotal).sort(
+            (a, b) => b[1] - a[1]
+          );
+          const [first, second, third] = sorted.map((p) => p[0]);
+
+          finalGame.players = [first, null];
+          eliminator.players = [second, third];
+          eliminator.points = { [second]: 0, [third]: 0 };
+          eliminator.server = second;
+
+          // Save to localStorage
+          saveToLocalStorage();
+
+          renderEliminator();
+          renderFinal();
+        }
+      }
+
+      // Initialize the tournament
+      function initializeTournament() {
+        // Try to load saved data
+        const dataLoaded = loadFromLocalStorage();
+
+        if (dataLoaded) {
+          showNotification(
+            "Tournament data loaded from previous session!",
+            "success"
+          );
+        }
+
+        // Initial render
+        renderNormalGames();
+        renderEliminator();
+        renderFinal();
+        updateLeaderboard();
+      }
+
+      // Initialize when page loads
+      document.addEventListener("DOMContentLoaded", initializeTournament);
+
+      // Save data when page is about to unload
+      window.addEventListener("beforeunload", saveToLocalStorage);
+
+      // Save data periodically (every 30 seconds)
+      setInterval(saveToLocalStorage, 30000);
     </script>
   </body>
 </html>
