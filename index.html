@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tournament Tracker</title>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      table,
+      th,
+      td {
+        border: 1px solid black;
+        border-collapse: collapse;
+        padding: 5px;
+      }
+      .leader {
+        font-weight: bold;
+        color: green;
+      }
+      .second {
+        font-weight: bold;
+        color: orange;
+      }
+      .third {
+        font-weight: bold;
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Point-Level Tournament Tracker</h1>
+
+    <h2>Normal Games</h2>
+    <table id="gamesTable">
+      <tr>
+        <th>Game</th>
+        <th>Players</th>
+        <th>Points</th>
+        <th>Server</th>
+        <th>Give Point</th>
+      </tr>
+    </table>
+
+    <h2>Eliminator</h2>
+    <div id="eliminatorDiv"></div>
+
+    <h2>Final</h2>
+    <div id="finalDiv"></div>
+
+    <h2>Leaderboard</h2>
+    <ul id="pointsList"></ul>
+
+    <script>
+      const ws = new WebSocket("ws://localhost:8000/ws");
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const gamesTable = document.getElementById("gamesTable");
+        gamesTable.innerHTML =
+          "<tr><th>Game</th><th>Players</th><th>Points</th><th>Server</th><th>Give Point</th></tr>";
+
+        data.normal_games.forEach((g) => {
+          const row = gamesTable.insertRow();
+          row.insertCell(0).innerText = g.id;
+          row.insertCell(1).innerText = g.players.join(" vs ");
+          row.insertCell(2).innerText = `${g.players[0]}:${
+            g.points[g.players[0]]
+          } | ${g.players[1]}:${g.points[g.players[1]]}`;
+          row.insertCell(3).innerText = g.server ?? "";
+          const btnCell = row.insertCell(4);
+          g.players.forEach((p) => {
+            const btn = document.createElement("button");
+            btn.innerText = p;
+            btn.disabled = g.winner != null;
+            btn.onclick = () =>
+              ws.send(
+                JSON.stringify({ type: "normal", game_id: g.id, player: p })
+              );
+            btnCell.appendChild(btn);
+          });
+        });
+
+        // Leaderboard
+        const pointsList = document.getElementById("pointsList");
+        pointsList.innerHTML = "";
+        data.ranking.forEach((player, idx) => {
+          const li = document.createElement("li");
+          li.innerText = `${player}: ${data.points_total[player]}`;
+          if (idx === 0) li.className = "leader";
+          else if (idx === 1) li.className = "second";
+          else li.className = "third";
+          pointsList.appendChild(li);
+        });
+      };
+    </script>
+  </body>
+</html>
